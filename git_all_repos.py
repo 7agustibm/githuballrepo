@@ -3,12 +3,15 @@ import os
 import requests
 
 
-def get_total_repos(group, name):
+def get_total_repos(group, name, token):
     repo_urls = []
     page = 1
     while True:
-        url = 'https://api.github.com/{0}/{1}/repos?per_page=100&page={2}'
-        r = requests.get(url.format(group, name, page))
+        if token:
+            url = 'https://{3}:x-oauth-basic@api.github.com/{0}/{1}/repos?per_page=100&page={2}'
+        else:            
+            url = 'https://api.github.com/{0}/{1}/repos?per_page=100&page={2}'
+        r = requests.get(url.format(group, name, page, token))
         if r.status_code == 200:
             rdata = r.json()
             for repo in rdata:
@@ -34,10 +37,14 @@ def clone_repos(all_repos):
         counter = counter + 1
 
 if __name__ == '__main__':
-    if len(sys.argv) > 2:
-        total = get_total_repos(sys.argv[1], sys.argv[2])
+    total = None;
+    if len(sys.argv) > 3:
+        total = get_total_repos(sys.argv[1], sys.argv[2], sys.argv[3])
         if total:
             clone_repos(total)
-
+    else if len(sys.argv) > 2:
+        total = get_total_repos(sys.argv[1], sys.argv[2], None)
+        if total:
+            clone_repos(total)
     else:
-        print('Usage: python USERS_OR_ORG GITHUB_USER_OR_ORG-NAME')
+        print('Usage: python USERS_OR_ORG GITHUB_USER_OR_ORG-NAME OAUTH_TOKEN')
